@@ -9,9 +9,10 @@ SKSINFO (rows: 39,230,146)
 TRNSACT (rows: 120,916,896)
 */
 
-/*
-Information extraction on Dillard's database using Teradata SQL queries:
 
+-- Information extraction on Dillard's database using Teradata SQL queries:
+
+/*
 Query 1: How many distinct skus have the brand “Polo fas”, and are either size “XXL” or “black” in color?
 */
 
@@ -127,7 +128,7 @@ ORDER BY worst_month DESC;
 
 
 /*
-Query 6: Compare the average daily revenue (as I define it in Teradata Week 5 Exercise Guide) of the store with the highest msa_income and the store with the lowest median msa_income (according to the msa_income field). In what city and state were these two stores, and which store had a higher average daily revenue?
+Query 6: Compare the average daily revenue of the store with the highest msa_income and the store with the lowest median msa_income (according to the msa_income field). In what city and state were these two stores, and which store had a higher average daily revenue?
 */
 
 -- highest income
