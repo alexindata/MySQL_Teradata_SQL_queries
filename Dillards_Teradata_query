@@ -13,7 +13,42 @@ TRNSACT (rows: 120,916,896)
 -- Information extraction on Dillard's database using Teradata SQL queries:
 
 /*
-Query 1: How many distinct skus have the brand “Polo fas”, and are either size “XXL” or “black” in color?
+Query 1: Find the highest priced item sold in each department in California stores, list sku, price, brand, department, city names in output.
+*/
+
+SELECT t.sku, t.sprice, s.brand, d.deptdesc, r.city
+FROM trnsact AS t
+INNER JOIN skuinfo AS s
+ON t.sku = s.sku
+INNER JOIN deptinfo AS d
+ON s.dept = d.dept
+INNER JOIN strinfo AS r
+ON r.store = t.store
+WHERE r.state = 'CA'
+QUALIFY ROW_NUMBER() OVER(PARTITION BY s.dept ORDER BY t.sprice DESC) = 1
+ORDER BY t.sprice DESC, d.deptdesc, s.brand, r.city
+;
+
+
+/*
+Query 2: Find the top 5 highest priced item sold in each department, list sku, price, brand, department, city names in output.
+*/
+
+SELECT t.sku, t.sprice, s.brand, d.deptdesc, r.city 
+FROM trnsact AS t
+INNER JOIN skuinfo AS s
+ON t.sku = s.sku
+INNER JOIN deptinfo AS d
+ON s.dept = d.dept
+INNER JOIN strinfo AS r
+ON r.store = t.store
+QUALIFY ROW_NUMBER() OVER(PARTITION BY s.dept ORDER BY t.sprice DESC) <= 5
+ORDER BY d.deptdesc ASC, t.sprice DESC;
+;
+
+
+/*
+Query 3: How many distinct skus have the brand “Polo fas”, and are either size “XXL” or “black” in color?
 */
 
 SELECT sku, size, color
@@ -22,7 +57,45 @@ WHERE brand='Polo fas' AND (size='XXL' OR color='black');
 
 
 /*
-Query 2: There was one store in the database which had only 11 days in one of its months (in other words, that store/month/year
+Query 4: Create a flat table in the database with information from all tables for the sku = '9417605'.
+*/
+
+SELECT *
+FROM 
+(
+SELECT *
+FROM trnsact
+WHERE sku = '9417605'
+)
+AS t
+INNER JOIN skuinfo AS u
+ON t.sku = u.sku
+INNER JOIN skstinfo AS k
+ON k.sku = u.sku
+INNER JOIN strinfo AS r
+ON r.store = k.store
+INNER JOIN store_msa AS m
+ON m.store = t.store
+;
+
+
+/*
+Query 5: List the number of transactions in the database by quarters of a season.
+*/
+
+SELECT CASE WHEN EXTRACT(MONTH FROM saledate) IN (1, 2, 3) THEN '1st'
+            WHEN EXTRACT(MONTH FROM saledate) IN (4, 5, 6) THEN '2nd'
+            WHEN EXTRACT(MONTH FROM saledate) IN (7, 8, 9) THEN '3rd'
+            WHEN EXTRACT(MONTH FROM saledate) IN (10, 11, 12) THEN '4th'
+            END AS quarter, count(saledate) AS num_transactions
+FROM trnsact
+GROUP BY quarter
+ORDER BY quarter ASC
+;
+
+
+/*
+Query 6: There was one store in the database which had only 11 days in one of its months (in other words, that store/month/year
 combination only contained 11 days of transaction data). In what city and state was this store located?
 */
 
@@ -39,7 +112,7 @@ ON t1.store=t2.store;
 
 
 /*
-Query 2: Which sku number had the greatest increase in total sales revenue from November to December?
+Query 7: Which sku number had the greatest increase in total sales revenue from November to December?
 */
 
 SELECT TOP 3 sku, SUM(CASE WHEN year_month='2004-11' THEN sales END) AS Nov_sum,
@@ -55,7 +128,7 @@ ORDER BY Increase DESC;
 
 
 /*
-Query 3: What is the brand of the sku with the greatest standard deviation in sprice? 
+Query 8: What is the brand of the sku with the greatest standard deviation in sprice? 
 Only examine skus which have been part of over 100 transactions.
 */
 
@@ -71,7 +144,7 @@ ON sku100.sku=u.sku;
 
 
 /*
-Query 4: What is the city and state of the store which had the greatest increase in average daily revenue from November to December?
+Query 9: What is the city and state of the store which had the greatest increase in average daily revenue from November to December?
 */
 
 SELECT s.store, s.city, s.state, s.store, Nov_daily, Dec_daily, (Dec_daily - Nov_daily) AS inc
@@ -98,7 +171,7 @@ ORDER BY inc DESC;
                   
 
 /*
-Query 5: Write a query that determines the month in which each store had its maximum number of sku units returned. During which 
+Query 10: Write a query that determines the month in which each store had its maximum number of sku units returned. During which 
 month did the greatest number of stores have their maximum number of sku units returned?
 */
 
@@ -131,7 +204,7 @@ ORDER BY worst_month DESC;
 
 
 /*
-Query 6: Compare the average daily revenue of the store with the highest msa_income and the store with the lowest median
+Query 11: Compare the average daily revenue of the store with the highest msa_income and the store with the lowest median
 msa_income (according to the msa_income field). In what city and state were these two stores, and which store had a higher
 average daily revenue?
 */
